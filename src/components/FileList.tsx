@@ -137,7 +137,7 @@ const FileList: React.FC<FileListProps> = ({ refreshTrigger, onFileSelect }) => 
   };
 
   return (
-    <Card className="w-full">
+    <Card className="w-full gradient-card shadow-colored">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>Document Library</span>
@@ -206,8 +206,8 @@ const FileList: React.FC<FileListProps> = ({ refreshTrigger, onFileSelect }) => 
               <div
                 key={file.id}
                 className={cn(
-                  "p-4 border rounded-lg transition-all cursor-pointer hover:shadow-soft",
-                  "bg-gradient-to-r from-card to-card/50"
+                  "p-5 border rounded-xl transition-all cursor-pointer hover-lift group",
+                  "bg-gradient-card hover:shadow-colored border-border/50 hover:border-primary/30"
                 )}
                 onClick={() => onFileSelect?.(file)}
               >

@@ -141,29 +141,32 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
   };
 
   return (
-    <Card className="w-full">
+    <Card className="w-full gradient-card border-primary/10">
       <CardContent className="p-6">
         <div className="space-y-4">
           {/* Dropzone */}
           <div
             {...getRootProps()}
             className={cn(
-              "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+              "border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all duration-300 hover-lift",
               isDragActive 
-                ? "border-primary bg-primary/5" 
-                : "border-muted-foreground/25 hover:border-primary/50"
+                ? "border-primary bg-gradient-primary/10 shadow-colored scale-105" 
+                : "border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5"
             )}
           >
             <input {...getInputProps()} />
-            <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <div className="space-y-2">
-              <p className="text-lg font-medium">
+            <Upload className={cn(
+              "mx-auto h-16 w-16 mb-6 transition-all duration-300",
+              isDragActive ? "text-primary animate-pulse scale-110" : "text-muted-foreground"
+            )} />
+            <div className="space-y-3">
+              <p className="text-xl font-semibold">
                 {isDragActive ? 'Drop files here' : 'Drag & drop files here'}
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground">
                 or click to select files
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground bg-muted/50 rounded-full px-4 py-2 inline-block">
                 Supports PDF, Word docs, images, and text files (max 10MB each)
               </p>
             </div>
@@ -176,7 +179,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
               {filesWithProgress.map((fileWithProgress) => (
                 <div
                   key={fileWithProgress.id}
-                  className="flex items-center space-x-3 p-3 border rounded-lg bg-muted/30"
+                  className="flex items-center space-x-3 p-4 border rounded-xl bg-gradient-card shadow-soft hover-lift"
                 >
                   <div className="flex-shrink-0">
                     {getFileIcon(fileWithProgress.file)}
@@ -223,7 +226,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
                 <Button
                   onClick={uploadFiles}
                   disabled={isUploading || filesWithProgress.every(f => f.status !== 'pending')}
-                  className="bg-gradient-primary"
+                  className="bg-gradient-primary hover:bg-gradient-primary/90 shadow-colored hover:shadow-glow transition-all duration-300"
                 >
                   {isUploading ? (
                     <>

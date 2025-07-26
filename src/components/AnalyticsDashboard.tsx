@@ -83,13 +83,13 @@ const AnalyticsDashboard: React.FC = () => {
       {/* Key Metrics Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Total Files */}
-        <Card className="bg-gradient-to-br from-card to-card/50 border-primary/20">
+        <Card className="gradient-card border-primary/20 hover-lift shadow-colored">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Files</CardTitle>
-            <Files className="h-4 w-4 text-primary" />
+            <Files className="h-5 w-5 text-primary animate-pulse" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">
+            <div className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
               {formatNumber(metrics.totalFiles)}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -99,35 +99,35 @@ const AnalyticsDashboard: React.FC = () => {
         </Card>
 
         {/* Success Rate */}
-        <Card className="bg-gradient-to-br from-card to-card/50">
+        <Card className="gradient-card border-success/20 hover-lift shadow-success">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-            <CheckCircle className={`h-4 w-4 ${getSuccessRateColor(metrics.successRate)}`} />
+            <CheckCircle className={`h-5 w-5 ${getSuccessRateColor(metrics.successRate)} animate-pulse`} />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${getSuccessRateColor(metrics.successRate)}`}>
+            <div className={`text-3xl font-bold bg-gradient-success bg-clip-text text-transparent`}>
               {Math.round(metrics.successRate * 100)}%
             </div>
-            <div className="mt-2">
+            <div className="mt-3">
               <Progress 
                 value={metrics.successRate * 100} 
-                className="h-2"
+                className="h-3"
               />
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-2">
               Processing success rate
             </p>
           </CardContent>
         </Card>
 
         {/* Average Processing Time */}
-        <Card className="bg-gradient-to-br from-card to-card/50">
+        <Card className="gradient-card border-processing/20 hover-lift">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg Processing</CardTitle>
-            <Clock className="h-4 w-4 text-processing" />
+            <Clock className="h-5 w-5 text-processing animate-spin" style={{animationDuration: '3s'}} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-processing">
+            <div className="text-3xl font-bold bg-gradient-processing bg-clip-text text-transparent">
               {metrics.averageProcessingTime.toFixed(1)}s
             </div>
             <p className="text-xs text-muted-foreground">
@@ -137,13 +137,13 @@ const AnalyticsDashboard: React.FC = () => {
         </Card>
 
         {/* Today's Uploads */}
-        <Card className="bg-gradient-to-br from-card to-card/50">
+        <Card className="gradient-card border-warning/20 hover-lift shadow-warning">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Today's Uploads</CardTitle>
-            <TrendingUp className="h-4 w-4 text-warning" />
+            <TrendingUp className="h-5 w-5 text-warning animate-bounce" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-warning">
+            <div className="text-3xl font-bold bg-gradient-warning bg-clip-text text-transparent">
               {metrics.uploadsToday}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -156,10 +156,10 @@ const AnalyticsDashboard: React.FC = () => {
       {/* Detailed Analytics */}
       <div className="grid gap-4 md:grid-cols-2">
         {/* System Status */}
-        <Card>
+        <Card className="gradient-card hover-lift shadow-colored">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Activity className="h-6 w-6 text-primary animate-pulse" />
               System Status
             </CardTitle>
           </CardHeader>
@@ -223,10 +223,10 @@ const AnalyticsDashboard: React.FC = () => {
         </Card>
 
         {/* Quick Stats */}
-        <Card>
+        <Card className="gradient-card hover-lift shadow-colored">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <TrendingUp className="h-6 w-6 text-success animate-bounce" />
               Quick Statistics
             </CardTitle>
           </CardHeader>

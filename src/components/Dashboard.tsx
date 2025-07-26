@@ -27,23 +27,23 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-subtle">
       {/* Header */}
-      <div className="bg-card border-b shadow-soft">
-        <div className="container mx-auto px-4 py-6">
+      <div className="bg-gradient-card border-b shadow-strong backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+            <div className="animate-float">
+              <h1 className="text-4xl font-bold bg-gradient-hero bg-clip-text text-transparent animate-pulse-glow">
                 Document Manager
               </h1>
-              <p className="text-muted-foreground mt-1">
+              <p className="text-muted-foreground mt-2 text-lg">
                 AI-powered document processing and management platform
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <Badge variant="outline" className="bg-success/10 text-success">
+              <Badge variant="outline" className="bg-success/20 text-success border-success/30 shadow-success hover-lift">
                 <div className="w-2 h-2 bg-success rounded-full mr-2 animate-pulse"></div>
                 System Online
               </Badge>
-              <Badge variant="outline" className="bg-primary/10 text-primary">
+              <Badge variant="outline" className="bg-primary/20 text-primary border-primary/30 shadow-colored hover-lift">
                 v2.1.0
               </Badge>
             </div>
@@ -71,13 +71,13 @@ const Dashboard: React.FC = () => {
 
           <TabsContent value="upload" className="space-y-6">
             <div className="max-w-4xl mx-auto">
-              <Card className="shadow-medium">
+              <Card className="shadow-colored hover-lift gradient-card border-primary/20">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Upload className="h-5 w-5" />
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Upload className="h-6 w-6 text-primary" />
                     Upload Documents
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground">
                     Upload your documents for AI-powered analysis and classification
                   </p>
                 </CardHeader>
@@ -87,27 +87,52 @@ const Dashboard: React.FC = () => {
               </Card>
 
               {/* Quick Tips */}
-              <Card className="mt-6">
+              <Card className="mt-6 hover-lift gradient-card border-success/20">
                 <CardHeader>
-                  <CardTitle className="text-lg">Quick Tips</CardTitle>
+                  <CardTitle className="text-xl bg-gradient-success bg-clip-text text-transparent">Quick Tips</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-2 gap-4 text-sm">
-                    <div className="space-y-2">
-                      <h4 className="font-medium">✨ AI Features</h4>
-                      <ul className="space-y-1 text-muted-foreground">
-                        <li>• Automatic document summarization</li>
-                        <li>• Intelligent classification</li>
-                        <li>• Content analysis and extraction</li>
+                  <div className="grid md:grid-cols-2 gap-6 text-sm">
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-primary flex items-center gap-2">
+                        ✨ AI Features
+                      </h4>
+                      <ul className="space-y-2 text-muted-foreground">
+                        <li className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                          Automatic document summarization
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                          Intelligent classification
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                          Content analysis and extraction
+                        </li>
                       </ul>
                     </div>
-                    <div className="space-y-2">
-                      <h4 className="font-medium">📄 Supported Formats</h4>
-                      <ul className="space-y-1 text-muted-foreground">
-                        <li>• PDF documents</li>
-                        <li>• Word documents (.doc, .docx)</li>
-                        <li>• Images (PNG, JPG, GIF)</li>
-                        <li>• Text files</li>
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-success flex items-center gap-2">
+                        📄 Supported Formats
+                      </h4>
+                      <ul className="space-y-2 text-muted-foreground">
+                        <li className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-success rounded-full"></div>
+                          PDF documents
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-success rounded-full"></div>
+                          Word documents (.doc, .docx)
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-success rounded-full"></div>
+                          Images (PNG, JPG, GIF)
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-success rounded-full"></div>
+                          Text files
+                        </li>
                       </ul>
                     </div>
                   </div>
