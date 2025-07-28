@@ -87,11 +87,26 @@ const FileList: React.FC<FileListProps> = ({ refreshTrigger, onFileSelect }) => 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'uploaded':
-        return <Badge variant="outline" className="bg-success/10 text-success border-success/20">🟢 Uploaded</Badge>;
+        return (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-success/20 to-success/10 border border-success/30">
+            <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>
+            <span className="text-success font-medium text-xs">Uploaded</span>
+          </div>
+        );
       case 'processing':
-        return <Badge variant="outline" className="bg-processing/10 text-processing border-processing/20">🟡 Processing</Badge>;
+        return (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-warning/20 to-warning/10 border border-warning/30">
+            <div className="w-2 h-2 rounded-full bg-warning animate-pulse"></div>
+            <span className="text-warning font-medium text-xs">Processing</span>
+          </div>
+        );
       case 'failed':
-        return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">🔴 Failed</Badge>;
+        return (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-destructive/20 to-destructive/10 border border-destructive/30">
+            <div className="w-2 h-2 rounded-full bg-destructive"></div>
+            <span className="text-destructive font-medium text-xs">Failed</span>
+          </div>
+        );
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -101,20 +116,76 @@ const FileList: React.FC<FileListProps> = ({ refreshTrigger, onFileSelect }) => 
     if (!confidence) return null;
     
     const percentage = Math.round(confidence * 100);
-    let className = '';
+    const radius = 16;
+    const strokeWidth = 3;
+    const normalizedRadius = radius - strokeWidth * 2;
+    const circumference = normalizedRadius * 2 * Math.PI;
+    const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
     
-    if (percentage >= 90) {
-      className = 'bg-success/10 text-success border-success/20';
+    let colorClass = '';
+    let bgClass = '';
+    let textClass = '';
+    let stars = '';
+    
+    if (percentage >= 95) {
+      colorClass = 'stroke-success';
+      bgClass = 'bg-gradient-to-r from-success/20 to-success/10';
+      textClass = 'text-success';
+      stars = '⭐⭐⭐';
+    } else if (percentage >= 90) {
+      colorClass = 'stroke-success';
+      bgClass = 'bg-gradient-to-r from-success/15 to-success/5';
+      textClass = 'text-success';
+      stars = '⭐⭐';
     } else if (percentage >= 70) {
-      className = 'bg-warning/10 text-warning border-warning/20';
+      colorClass = 'stroke-warning';
+      bgClass = 'bg-gradient-to-r from-warning/20 to-warning/10';
+      textClass = 'text-warning';
+      stars = '⭐';
     } else {
-      className = 'bg-destructive/10 text-destructive border-destructive/20';
+      colorClass = 'stroke-destructive';
+      bgClass = 'bg-gradient-to-r from-destructive/20 to-destructive/10';
+      textClass = 'text-destructive';
+      stars = '⚠️';
     }
     
     return (
-      <Badge variant="outline" className={className}>
-        {percentage}% confidence
-      </Badge>
+      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${bgClass} ${textClass}`}>
+        <div className="relative w-8 h-8">
+          <svg
+            height={radius * 2}
+            width={radius * 2}
+            className="transform -rotate-90"
+          >
+            <circle
+              stroke="currentColor"
+              fill="transparent"
+              strokeWidth={strokeWidth}
+              strokeDasharray={strokeDasharray}
+              r={normalizedRadius}
+              cx={radius}
+              cy={radius}
+              className={`${colorClass} opacity-80`}
+            />
+            <circle
+              stroke="currentColor"
+              fill="transparent"
+              strokeWidth={strokeWidth}
+              r={normalizedRadius}
+              cx={radius}
+              cy={radius}
+              className="opacity-20"
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-xs font-bold">{percentage}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-xs font-medium">AI Confidence</span>
+          <span className="text-xs">{stars}</span>
+        </div>
+      </div>
     );
   };
 
