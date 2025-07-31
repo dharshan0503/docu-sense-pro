@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, BarChart3, FileText, Settings } from 'lucide-react';
+import { Upload, BarChart3, FileText, Settings, LogOut, User } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,8 +8,11 @@ import FileList from './FileList';
 import FileDetailsModal from './FileDetailsModal';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import { type FileUpload as FileUploadType } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
 
 const Dashboard: React.FC = () => {
+  const { user, signOut } = useAuth();
   const [selectedFile, setSelectedFile] = useState<FileUploadType | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [activeTab, setActiveTab] = useState('files');
@@ -44,8 +47,18 @@ const Dashboard: React.FC = () => {
                 System Online
               </Badge>
               <Badge variant="outline" className="bg-primary/20 text-primary border-primary/30 shadow-colored hover-lift">
-                v2.1.0
+                <User className="w-3 h-3 mr-1" />
+                {user?.email}
               </Badge>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={signOut}
+                className="flex items-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </Button>
             </div>
           </div>
         </div>

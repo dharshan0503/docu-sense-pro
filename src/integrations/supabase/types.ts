@@ -24,6 +24,7 @@ export type Database = {
           file_id: string
           filename: string
           status: string
+          user_id: string | null
         }
         Insert: {
           confidence?: number | null
@@ -34,6 +35,7 @@ export type Database = {
           file_id: string
           filename: string
           status: string
+          user_id?: string | null
         }
         Update: {
           confidence?: number | null
@@ -44,6 +46,7 @@ export type Database = {
           file_id?: string
           filename?: string
           status?: string
+          user_id?: string | null
         }
         Relationships: []
       }
