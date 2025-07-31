@@ -1,26 +1,18 @@
-import axios from 'axios';
+import { supabase } from '@/integrations/supabase/client';
 
-// Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.example.com';
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Types
 export interface FileUpload {
   id: string;
   filename: string;
-  status: 'uploaded' | 'processing' | 'failed';
-  timestamp: string;
-  summary?: string;
-  classification?: string;
-  confidence?: number;
+  type?: string;
   size: number;
-  type: string;
+  status: 'uploaded' | 'processing' | 'completed' | 'failed';
+  timestamp: string;
+  classification?: string;
+  summary?: string;
+  confidence?: number;
+  doc_type?: string;
+  extracted_text?: string;
+  entities?: any;
 }
 
 export interface FileDetails extends FileUpload {
@@ -32,7 +24,7 @@ export interface FileDetails extends FileUpload {
 export interface UploadProgress {
   fileId: string;
   progress: number;
-  status: 'uploading' | 'processing' | 'completed' | 'error';
+  status?: 'uploading' | 'processing' | 'completed' | 'error';
 }
 
 export interface Metrics {
@@ -50,204 +42,199 @@ export interface FeedbackData {
   reason?: string;
 }
 
-// API Functions
-export const fileApi = {
-  // Upload files with progress tracking (Enhanced with Mock Success)
-  uploadFiles: async (
-    files: File[], 
-    onProgress?: (fileId: string, progress: number) => void
-  ): Promise<FileUpload[]> => {
-    const uploads = files.map(async (file) => {
-      const fileId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Simulate upload progress for demo
-      const simulateProgress = () => {
-        return new Promise<void>((resolve) => {
-          let progress = 0;
-          const interval = setInterval(() => {
-            progress += Math.random() * 15 + 5; // Random progress increments
-            if (progress > 100) progress = 100;
-            
-            onProgress?.(fileId, Math.floor(progress));
-            
-            if (progress >= 100) {
-              clearInterval(interval);
-              resolve();
-            }
-          }, 100 + Math.random() * 200); // Random timing for realism
-        });
-      };
+export interface FileFilters {
+  search?: string;
+  status?: string;
+  type?: string;
+  page?: number;
+  limit?: number;
+}
 
-      try {
-        // First try real API, if it fails, use mock
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        const response = await Promise.race([
-          api.post('/upload', formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-            onUploadProgress: (progressEvent) => {
-              const progress = Math.round(
-                (progressEvent.loaded * 100) / (progressEvent.total || 1)
-              );
-              onProgress?.(fileId, progress);
-            },
-          }),
-          // Timeout after 3 seconds and use mock
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('API timeout')), 3000)
-          )
-        ]);
-        
-        return {
-          id: (response as any).data?.id || fileId,
-          filename: file.name,
-          status: 'uploaded' as const,
-          timestamp: new Date().toISOString(),
-          size: file.size,
-          type: file.type,
-          summary: generateMockSummary(file.name),
-          classification: generateMockClassification(file.name),
-          confidence: 0.92 + Math.random() * 0.07, // 92-99% confidence
-          ...(response as any).data,
-        };
-      } catch (error) {
-        console.log('Using mock upload due to API unavailability');
-        
-        // Use mock upload with progress simulation
-        await simulateProgress();
-        
-        return {
-          id: fileId,
-          filename: file.name,
-          status: 'uploaded' as const,
-          timestamp: new Date().toISOString(),
-          size: file.size,
-          type: file.type,
-          summary: generateMockSummary(file.name),
-          classification: generateMockClassification(file.name),
-          confidence: 0.92 + Math.random() * 0.07, // 92-99% confidence
-        };
-      }
-    });
+export const fileApi = {
+  async uploadFiles(files: File[], onProgress?: (fileId: string, progress: number) => void): Promise<Array<{status: string}>> {
+    const results: Array<{status: string}> = [];
     
-    return Promise.all(uploads);
+    for (const file of files) {
+      try {
+        // Simulate progress
+        if (onProgress) {
+          for (let i = 0; i <= 100; i += 25) {
+            setTimeout(() => onProgress(file.name, i), i * 20);
+          }
+        }
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
+        
+        // Insert file record into database
+        const { data, error } = await supabase
+          .from('documents')
+          .insert({
+            user_id: user.id,
+            filename: file.name,
+            status: 'uploaded',
+            file_id: crypto.randomUUID(),
+            doc_type: file.type,
+            confidence: 0.92 + Math.random() * 0.07, // Mock confidence
+            extracted_text: generateMockSummary(file.name),
+            // Note: In a real app, you'd upload the actual file to storage
+            // and process it with your AI service
+          })
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        // Final progress update
+        if (onProgress) {
+          setTimeout(() => onProgress(file.name, 100), 100);
+        }
+        
+        results.push({ status: 'success' });
+      } catch (error) {
+        console.error('Upload failed for file:', file.name, error);
+        results.push({ status: 'failed' });
+      }
+    }
+    
+    return results;
   },
 
-  // Get all files
-  getFiles: async (params?: {
-    search?: string;
-    status?: string;
-    type?: string;
-    page?: number;
-    limit?: number;
-  }): Promise<FileUpload[]> => {
+  async getFiles(filters?: FileFilters): Promise<FileUpload[]> {
     try {
-      const response = await api.get('/files', { params });
-      return response.data.files || response.data;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+      
+      let query = supabase
+        .from('documents')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (filters?.status && filters.status !== 'all') {
+        query = query.eq('status', filters.status);
+      }
+      
+      if (filters?.search) {
+        query = query.or(`filename.ilike.%${filters.search}%,doc_type.ilike.%${filters.search}%,extracted_text.ilike.%${filters.search}%`);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      return data.map(doc => ({
+        id: doc.file_id,
+        filename: doc.filename,
+        type: doc.doc_type,
+        size: Math.floor(Math.random() * 1000000) + 100000, // Mock size for now
+        status: doc.status as any,
+        timestamp: doc.created_at,
+        classification: generateMockClassification(doc.filename),
+        summary: doc.extracted_text?.substring(0, 100) + '...',
+        confidence: doc.confidence,
+        doc_type: doc.doc_type,
+        extracted_text: doc.extracted_text,
+        entities: doc.entities,
+      }));
     } catch (error) {
       console.error('Failed to fetch files:', error);
-      // Return mock data for development
-      return mockFiles;
+      throw error;
     }
   },
 
-  // Get file details
-  getFileDetails: async (fileId: string): Promise<FileDetails> => {
+  async getFileDetails(fileId: string): Promise<FileDetails> {
     try {
-      const response = await api.get(`/files/${fileId}`);
-      return response.data;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+      
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('file_id', fileId)
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error) throw error;
+      
+      return {
+        id: data.file_id,
+        filename: data.filename,
+        type: data.doc_type,
+        size: Math.floor(Math.random() * 1000000) + 100000,
+        status: data.status as any,
+        timestamp: data.created_at,
+        classification: generateMockClassification(data.filename),
+        summary: data.extracted_text?.substring(0, 100) + '...',
+        confidence: data.confidence,
+        content: data.extracted_text,
+        metadata: data.entities as Record<string, any> || {},
+      };
     } catch (error) {
       console.error('Failed to fetch file details:', error);
-      // Return mock data for development
-      const mockFile = mockFiles.find(f => f.id === fileId);
-      return mockFile || mockFiles[0];
+      throw error;
     }
   },
 
-  // Delete file
-  deleteFile: async (fileId: string): Promise<void> => {
+  async deleteFile(fileId: string): Promise<void> {
     try {
-      await api.delete(`/files/${fileId}`);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+      
+      const { error } = await supabase
+        .from('documents')
+        .delete()
+        .eq('file_id', fileId)
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
     } catch (error) {
       console.error('Failed to delete file:', error);
       throw error;
     }
   },
 
-  // Submit feedback
-  submitFeedback: async (feedback: FeedbackData): Promise<void> => {
-    try {
-      await api.post('/feedback', feedback);
-    } catch (error) {
-      console.error('Failed to submit feedback:', error);
-      throw error;
-    }
+  async submitFeedback(feedback: FeedbackData): Promise<void> {
+    // Mock implementation for now
+    console.log('Feedback submitted:', feedback);
   },
 
-  // Get metrics
-  getMetrics: async (): Promise<Metrics> => {
+  async getMetrics(): Promise<Metrics> {
     try {
-      const response = await api.get('/metrics');
-      return response.data;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+      
+      const { data, error } = await supabase
+        .from('documents')
+        .select('status, created_at')
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      const totalFiles = data.length;
+      const successCount = data.filter(doc => doc.status === 'uploaded').length;
+      const today = new Date().toDateString();
+      const uploadsToday = data.filter(doc => 
+        new Date(doc.created_at).toDateString() === today
+      ).length;
+      
+      return {
+        totalFiles,
+        successRate: totalFiles > 0 ? successCount / totalFiles : 0,
+        averageProcessingTime: 12.5, // Mock
+        uploadsToday,
+        processingQueue: data.filter(doc => doc.status === 'processing').length,
+      };
     } catch (error) {
       console.error('Failed to fetch metrics:', error);
-      // Return mock data for development
-      return mockMetrics;
+      return {
+        totalFiles: 0,
+        successRate: 0,
+        averageProcessingTime: 0,
+        uploadsToday: 0,
+        processingQueue: 0,
+      };
     }
   },
-};
-
-// Mock data for development
-const mockFiles: FileUpload[] = [
-  {
-    id: '1',
-    filename: 'invoice_2024_001.pdf',
-    status: 'uploaded',
-    timestamp: '2024-07-26T10:30:00Z',
-    summary: 'Monthly invoice for cloud services totaling $1,234.56',
-    classification: 'Invoice',
-    confidence: 0.95,
-    size: 2048000,
-    type: 'application/pdf',
-  },
-  {
-    id: '2',
-    filename: 'contract_agreement.docx',
-    status: 'processing',
-    timestamp: '2024-07-26T11:15:00Z',
-    size: 1024000,
-    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  },
-  {
-    id: '3',
-    filename: 'business_letter.pdf',
-    status: 'uploaded',
-    timestamp: '2024-07-26T09:45:00Z',
-    summary: 'Business correspondence regarding partnership proposal',
-    classification: 'Letter',
-    confidence: 0.87,
-    size: 512000,
-    type: 'application/pdf',
-  },
-  {
-    id: '4',
-    filename: 'failed_upload.jpg',
-    status: 'failed',
-    timestamp: '2024-07-26T08:20:00Z',
-    size: 3072000,
-    type: 'image/jpeg',
-  },
-];
-
-const mockMetrics: Metrics = {
-  totalFiles: 1247,
-  successRate: 0.94,
-  averageProcessingTime: 12.5,
-  uploadsToday: 23,
-  processingQueue: 5,
 };
 
 // Helper functions for generating mock data
@@ -273,5 +260,3 @@ const generateMockClassification = (filename: string): string => {
   const classifications = ['Invoice', 'Contract', 'Letter', 'Report', 'Proposal', 'Agreement'];
   return classifications[Math.floor(Math.random() * classifications.length)];
 };
-
-export default api;

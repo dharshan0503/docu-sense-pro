@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Search, Filter, Trash2, Eye, MoreHorizontal, FileText, Image, File, Download, Calendar, Star, Sparkles, Grid3X3, List, SortAsc, Archive, Brain, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,6 +50,29 @@ const FileList: React.FC<FileListProps> = ({ refreshTrigger, onFileSelect }) => 
   useEffect(() => {
     loadFiles();
   }, [refreshTrigger, searchQuery, statusFilter, typeFilter]);
+
+  // Add real-time subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('documents-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'documents'
+        },
+        () => {
+          // Reload files when any change occurs
+          loadFiles();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const filteredFiles = useMemo(() => {
     return files.filter(file => {
