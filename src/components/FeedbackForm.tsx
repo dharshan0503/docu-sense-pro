@@ -39,7 +39,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ file, open, onOpenChange })
     try {
       const feedbackData: FeedbackData = {
         fileId: file.id,
-        type: feedbackType,
+        feedbackType: feedbackType as 'summary' | 'classification',
         correctValue: correctValue.trim(),
         reason: reason.trim() || undefined,
       };

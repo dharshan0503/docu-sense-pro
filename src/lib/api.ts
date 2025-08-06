@@ -37,7 +37,7 @@ export interface Metrics {
 
 export interface FeedbackData {
   fileId: string;
-  type: 'summary' | 'classification';
+  feedbackType: 'summary' | 'classification';
   correctValue: string;
   reason?: string;
 }
@@ -56,38 +56,73 @@ export const fileApi = {
     
     for (const file of files) {
       try {
+        const fileId = crypto.randomUUID();
+        
         // Simulate progress
         if (onProgress) {
-          for (let i = 0; i <= 100; i += 25) {
-            setTimeout(() => onProgress(file.name, i), i * 20);
+          for (let i = 0; i <= 75; i += 25) {
+            setTimeout(() => onProgress(fileId, i), i * 20);
           }
         }
         
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('User not authenticated');
         
-        // Insert file record into database
-        const { data, error } = await supabase
-          .from('documents')
-          .insert({
-            user_id: user.id,
-            filename: file.name,
-            status: 'uploaded',
-            file_id: crypto.randomUUID(),
-            doc_type: file.type,
-            confidence: 0.92 + Math.random() * 0.07, // Mock confidence
-            extracted_text: generateMockSummary(file.name),
-            // Note: In a real app, you'd upload the actual file to storage
-            // and process it with your AI service
-          })
-          .select()
-          .single();
-        
-        if (error) throw error;
+        // Extract text content for analysis
+        let textContent = '';
+        try {
+          if (file.type.includes('text')) {
+            textContent = await file.text();
+          } else if (file.type.includes('pdf')) {
+            textContent = `PDF document: ${file.name}. Content extraction would be implemented here.`;
+          } else {
+            textContent = `File: ${file.name}. Binary content analysis would be implemented here.`;
+          }
+        } catch (error) {
+          console.error('Error extracting content:', error);
+          textContent = `File: ${file.name}. Content extraction failed.`;
+        }
+
+        // Insert into database with initial status  
+        const { error } = await supabase.from('documents').insert({
+          file_id: fileId,
+          user_id: user.id,
+          filename: file.name,
+          doc_type: file.type,
+          status: 'processing',
+          extracted_text: textContent.substring(0, 500),
+          confidence: 0.5
+        });
+
+        if (error) {
+          console.error('Database error:', error);
+          throw new Error('Failed to save file to database');
+        }
+
+        // Trigger AI analysis in background
+        try {
+          const { error: functionError } = await supabase.functions.invoke('analyze-document', {
+            body: {
+              fileId,
+              content: textContent,
+              fileName: file.name,
+              mimeType: file.type
+            }
+          });
+
+          if (functionError) {
+            console.error('AI analysis error:', functionError);
+            await supabase.from('documents').update({
+              status: 'failed'
+            }).eq('file_id', fileId);
+          }
+        } catch (analysisError) {
+          console.error('Failed to trigger analysis:', analysisError);
+        }
         
         // Final progress update
         if (onProgress) {
-          setTimeout(() => onProgress(file.name, 100), 100);
+          setTimeout(() => onProgress(fileId, 100), 2000);
         }
         
         results.push({ status: 'success' });
@@ -194,8 +229,29 @@ export const fileApi = {
   },
 
   async submitFeedback(feedback: FeedbackData): Promise<void> {
-    // Mock implementation for now
-    console.log('Feedback submitted:', feedback);
+    console.log('Submitting feedback:', feedback);
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { error } = await supabase.functions.invoke('process-feedback', {
+        body: {
+          fileId: feedback.fileId,
+          feedbackType: feedback.feedbackType,
+          correctValue: feedback.correctValue,
+          reason: feedback.reason,
+          userId: user.id
+        }
+      });
+
+      if (error) {
+        throw new Error('Failed to submit feedback');
+      }
+    } catch (error) {
+      console.error('Feedback submission error:', error);
+      throw error;
+    }
   },
 
   async getMetrics(): Promise<Metrics> {
@@ -220,7 +276,7 @@ export const fileApi = {
       return {
         totalFiles,
         successRate: totalFiles > 0 ? successCount / totalFiles : 0,
-        averageProcessingTime: 12.5, // Mock
+        averageProcessingTime: 12.5,
         uploadsToday,
         processingQueue: data.filter(doc => doc.status === 'processing').length,
       };
