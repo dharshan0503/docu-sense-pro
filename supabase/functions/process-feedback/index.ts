@@ -28,9 +28,9 @@ serve(async (req) => {
 
     // Get current file data
     const { data: fileData, error: fileError } = await supabase
-      .from('files')
+      .from('documents')
       .select('*')
-      .eq('id', fileId)
+      .eq('file_id', fileId)
       .single();
 
     if (fileError || !fileData) {
@@ -42,7 +42,7 @@ serve(async (req) => {
       file_id: fileId,
       user_id: userId,
       feedback_type: feedbackType,
-      original_value: feedbackType === 'summary' ? fileData.ai_summary : fileData.document_classification,
+        original_value: feedbackType === 'summary' ? fileData.extracted_text : fileData.doc_type,
       correct_value: correctValue,
       reason: reason,
       created_at: new Date().toISOString()
@@ -55,8 +55,8 @@ serve(async (req) => {
         console.log('Reprocessing with feedback...');
         
         const improvePrompt = feedbackType === 'summary' 
-          ? `The previous summary was: "${fileData.ai_summary}". User feedback indicates the correct summary should be: "${correctValue}". Reason: "${reason}". Please provide an improved summary for this document.`
-          : `The previous classification was: "${fileData.document_classification}". User feedback indicates the correct classification should be: "${correctValue}". Reason: "${reason}". Please provide an improved classification.`;
+          ? `The previous summary was: "${fileData.extracted_text}". User feedback indicates the correct summary should be: "${correctValue}". Reason: "${reason}". Please provide an improved summary for this document.`
+          : `The previous classification was: "${fileData.doc_type}". User feedback indicates the correct classification should be: "${correctValue}". Reason: "${reason}". Please provide an improved classification.`;
 
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -73,7 +73,7 @@ serve(async (req) => {
               },
               {
                 role: 'user',
-                content: improvePrompt + `\n\nOriginal content: ${fileData.content_preview}`
+              content: improvedValue + `\n\nOriginal content: ${fileData.extracted_text}`
               }
             ],
             temperature: 0.2,
@@ -87,21 +87,21 @@ serve(async (req) => {
 
           // Update the file with improved analysis
           const updateData = feedbackType === 'summary' 
-            ? { ai_summary: improvedValue }
-            : { document_classification: improvedValue };
+            ? { extracted_text: improvedValue }
+            : { doc_type: improvedValue };
 
           await supabase
-            .from('files')
+            .from('documents')
             .update({
               ...updateData,
-              confidence_score: Math.min(1.0, (fileData.confidence_score || 0.5) + 0.1), // Slightly increase confidence
-              metadata: {
-                ...fileData.metadata,
+              confidence: Math.min(1.0, (fileData.confidence || 0.5) + 0.1),
+              entities: {
+                ...fileData.entities,
                 feedback_applied: true,
                 last_updated: new Date().toISOString()
               }
             })
-            .eq('id', fileId);
+            .eq('file_id', fileId);
 
           console.log('Successfully updated file with improved analysis');
         }

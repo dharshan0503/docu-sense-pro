@@ -105,20 +105,19 @@ Format your response as JSON with these exact keys: summary, key_points, documen
 
     // Update file record with analysis
     const { error: updateError } = await supabase
-      .from('files')
+      .from('documents')
       .update({
-        ai_summary: analysis.summary,
-        document_classification: analysis.document_type,
-        confidence_score: analysis.confidence,
-        content_preview: content.substring(0, 500),
-        metadata: {
+        extracted_text: analysis.summary,
+        doc_type: analysis.document_type,
+        confidence: analysis.confidence,
+        entities: {
           key_points: analysis.key_points,
           topics: analysis.topics,
           analyzed_at: new Date().toISOString()
         },
-        status: 'processed'
+        status: 'uploaded'
       })
-      .eq('id', fileId);
+      .eq('file_id', fileId);
 
     if (updateError) {
       console.error('Database update error:', updateError);

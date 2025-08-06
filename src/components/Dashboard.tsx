@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, BarChart3, FileText, Settings, LogOut, User } from 'lucide-react';
+import { Upload, BarChart3, FileText, Settings, LogOut, User, Brain } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,7 @@ import FileUpload from './FileUpload';
 import FileList from './FileList';
 import FileDetailsModal from './FileDetailsModal';
 import AnalyticsDashboard from './AnalyticsDashboard';
+import ExtractedDataViewer from './ExtractedDataViewer';
 import { type FileUpload as FileUploadType } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -67,7 +68,7 @@ const Dashboard: React.FC = () => {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
             <TabsTrigger value="upload" className="flex items-center gap-2">
               <Upload className="h-4 w-4" />
               Upload Files
@@ -75,6 +76,10 @@ const Dashboard: React.FC = () => {
             <TabsTrigger value="files" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               File Library
+            </TabsTrigger>
+            <TabsTrigger value="extracted" className="flex items-center gap-2">
+              <Brain className="h-4 w-4" />
+              Extracted Data
             </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
@@ -159,6 +164,10 @@ const Dashboard: React.FC = () => {
               refreshTrigger={refreshTrigger}
               onFileSelect={handleFileSelect}
             />
+          </TabsContent>
+
+          <TabsContent value="extracted" className="space-y-6">
+            <ExtractedDataViewer />
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
