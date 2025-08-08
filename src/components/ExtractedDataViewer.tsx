@@ -14,6 +14,10 @@ interface ExtractedData {
   keyPoints: string[];
   topics: string[];
   timestamp: string;
+  metadata?: any;
+  contentPreview?: string;
+  analysisMethod?: string;
+  fileSize?: number;
 }
 
 const ExtractedDataViewer = () => {
